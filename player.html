@@ -721,7 +721,7 @@
     </script>
 </body>
 </html>
------->
+------
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -769,6 +769,82 @@
             const player = document.getElementById('vPlayer');
             player.src = `${API}/video/${fileId}?token=${token}`;
             player.play();
+        }
+
+        if(courseId) fetchLessons();
+    </script>
+</body>
+</html>
+----------->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Academy Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white min-h-screen p-6">
+    <div class="container mx-auto flex flex-col lg:flex-row gap-8">
+        <div class="flex-1">
+            <div class="relative bg-black rounded-2xl overflow-hidden border border-slate-800">
+                <video id="vPlayer" controls crossorigin="anonymous" class="w-full aspect-video"></video>
+                <div id="playOverlay" class="hidden absolute inset-0 flex items-center justify-center bg-black/60 cursor-pointer" onclick="forcePlay()">
+                    <div class="bg-blue-600 p-4 rounded-full font-bold">CLICK TO LOAD VIDEO</div>
+                </div>
+            </div>
+            <h1 id="vTitle" class="text-2xl font-bold mt-6 text-blue-400 italic">Select a lesson...</h1>
+        </div>
+        <div class="w-full lg:w-80 bg-slate-900 rounded-2xl p-6 border border-slate-800">
+            <h2 class="text-xl font-bold mb-4">Lessons</h2>
+            <div id="lList" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <script>
+        // Ensure NO trailing slash here
+        const API = "https://three-emus-fix.loca.lt"; 
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('course');
+        const token = localStorage.getItem('token');
+
+        async function fetchLessons() {
+            try {
+                const res = await fetch(`${API}/api/lessons/${courseId}`, {
+                    headers: { "Bypass-Tunnel-Reminder": "true" }
+                });
+                const data = await res.json();
+                const list = document.getElementById('lList');
+                list.innerHTML = data.map(l => `
+                    <button onclick="loadVideo('${l.file_id}', '${l.title.replace(/'/g, "\\'")}')" 
+                            class="w-full text-left p-3 rounded bg-slate-800 hover:bg-blue-600 border border-slate-700">
+                        ${l.title}
+                    </button>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        function loadVideo(fileId, title) {
+            document.getElementById('vTitle').innerText = title;
+            const player = document.getElementById('vPlayer');
+            const overlay = document.getElementById('playOverlay');
+            
+            // CONSTRUCT URL WITHOUT DOUBLE SLASH
+            const videoUrl = `${API}/video/${fileId}?token=${token}`;
+            
+            player.src = videoUrl;
+            player.load();
+            
+            const playPromise = player.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    // Show overlay if autoplay is blocked
+                    overlay.classList.remove('hidden');
+                });
+            }
+        }
+
+        function forcePlay() {
+            document.getElementById('playOverlay').classList.add('hidden');
+            document.getElementById('vPlayer').play();
         }
 
         if(courseId) fetchLessons();
