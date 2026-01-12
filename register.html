@@ -16,7 +16,7 @@
     <script>
         document.getElementById('regForm').onsubmit = async (e) => {
             e.preventDefault();
-            const res = await fetch('http://localhost:8000/register', {
+            const res = await fetch('https://polite-dancers-repeat.loca.lt/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: u.value, password: p.value })
