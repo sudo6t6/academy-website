@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+    <div class="bg-gray-800 p-8 rounded-xl w-80 border border-gray-700">
+        <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+        <form id="loginForm" class="space-y-4">
+            <input type="text" id="u" placeholder="Username" class="w-full p-2 bg-gray-900 rounded border border-gray-600">
+            <input type="password" id="p" placeholder="Password" class="w-full p-2 bg-gray-900 rounded border border-gray-600">
+            <button class="w-full bg-green-600 py-2 rounded font-bold">Login</button>
+        </form>
+    </div>
+    <script>
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const res = await fetch('http://localhost:8000/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u.value, password: p.value })
+            });
+            if (res.ok) {
+                const d = await res.json();
+                localStorage.setItem('token', d.access_token);
+                localStorage.setItem('has_access', d.has_access);
+                window.location.href="index.html";
+            } else { alert("Login Failed"); }
+        };
+    </script>
+</body>
+</html>

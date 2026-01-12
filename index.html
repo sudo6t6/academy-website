@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academy - My Courses</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .course-card:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+
+    <nav class="border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                PRO Academy
+            </h1>
+            <div id="authStatus" class="flex items-center gap-4">
+                </div>
+        </div>
+    </nav>
+
+    <header class="container mx-auto px-6 py-12 text-center">
+        <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Master Your Skills</h2>
+        <p class="text-gray-400 text-lg">Select a course below to start your learning journey.</p>
+    </header>
+
+    <main class="container mx-auto px-6 pb-20">
+        <div id="courseGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="animate-pulse bg-gray-900 h-64 rounded-2xl"></div>
+            <div class="animate-pulse bg-gray-900 h-64 rounded-2xl"></div>
+            <div class="animate-pulse bg-gray-900 h-64 rounded-2xl"></div>
+        </div>
+    </main>
+
+    <script>
+        //const API = "http://localhost:8000";
+        const API = "https://social-carrots-write.loca.lt";
+        const token = localStorage.getItem('token');
+        const hasAccess = localStorage.getItem('has_access') === '1';
+
+        // 1. Update Navigation based on Auth
+        const authDiv = document.getElementById('authStatus');
+        if (token) {
+            authDiv.innerHTML = `
+                <span class="text-sm text-gray-400">Welcome Back</span>
+                <button onclick="logout()" class="text-sm bg-red-500/10 text-red-500 px-4 py-2 rounded-lg hover:bg-red-500 hover:text-white transition">Logout</button>
+            `;
+        } else {
+            authDiv.innerHTML = `
+                <a href="login.html" class="text-sm font-bold text-blue-400">Login</a>
+                <a href="register.html" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold">Join Now</a>
+            `;
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.reload();
+        }
+
+        // 2. Fetch and Display Courses
+        async function loadCourses() {
+            try {
+                const res = await fetch(`${API}/api/courses`);
+                const courses = await res.json();
+                const grid = document.getElementById('courseGrid');
+                
+                if (courses.length === 0) {
+                    grid.innerHTML = `<p class="col-span-full text-center text-gray-500">No courses available yet. Check back soon!</p>`;
+                    return;
+                }
+
+                grid.innerHTML = courses.map(course => `
+                    <div class="course-card bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl">
+                        <div class="h-40 bg-gradient-to-br from-blue-600/20 to-purple-600/20 flex items-center justify-center border-b border-gray-800">
+                            <svg class="w-16 h-16 text-blue-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">${course.name}</h3>
+                            <p class="text-gray-400 text-sm mb-6">${course.description || 'Master this subject with our comprehensive video curriculum.'}</p>
+                            
+                            ${token ? (
+                                hasAccess 
+                                ? `<button onclick="goToPlayer(${course.id})" class="w-full bg-blue-600 py-3 rounded-xl font-bold hover:bg-blue-500 transition">Continue Learning</button>`
+                                : `<button onclick="buyCourse()" class="w-full bg-green-600 py-3 rounded-xl font-bold hover:bg-green-500 transition">Unlock Course</button>`
+                            ) : `
+                                <button onclick="window.location.href='login.html'" class="w-full bg-gray-800 py-3 rounded-xl font-bold hover:bg-gray-700 transition">Login to Watch</button>
+                            `}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error("Failed to load courses:", error);
+            }
+        }
+
+        function goToPlayer(courseId) {
+            window.location.href = `player.html?course=${courseId}`;
+        }
+
+        async function buyCourse() {
+            if (!token) return window.location.href = 'login.html';
+            
+            // Calling the simulation payment endpoint
+            const res = await fetch(`${API}/pay?token=${token}`, { method: 'POST' });
+            if (res.ok) {
+                localStorage.setItem('has_access', '1');
+                alert("Course Unlocked Successfully!");
+                location.reload();
+            } else {
+                alert("Payment failed. Please try again.");
+            }
+        }
+
+        loadCourses();
+    </script>
+</body>
+</html>

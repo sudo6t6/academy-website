@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Academy Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-6 md:p-12">
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-3xl font-bold text-blue-500 mb-8">LMS Control Center</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="space-y-6">
+                <section class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl">
+                    <h2 class="text-xl font-bold mb-4">1. Create Course</h2>
+                    <input id="cName" type="text" placeholder="Course Name" class="w-full bg-gray-900 p-3 rounded-lg border border-gray-700 mb-4 outline-none focus:border-blue-500">
+                    <button onclick="addCourse()" class="w-full bg-blue-600 py-3 rounded-lg font-bold hover:bg-blue-500 transition">Create Course</button>
+                </section>
+
+                <section class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl">
+                    <h2 class="text-xl font-bold mb-4">2. Add Lesson</h2>
+                    <div class="space-y-4">
+                        <select id="cSelect" onchange="loadCurrentLessons()" class="w-full bg-gray-900 p-3 rounded-lg border border-gray-700 outline-none"></select>
+                        <input id="lTitle" type="text" placeholder="Lesson Title (e.g. Intro to Loops)" class="w-full bg-gray-900 p-3 rounded-lg border border-gray-700 outline-none">
+                        <input id="lFile" type="text" placeholder="Telegram File ID" class="w-full bg-gray-900 p-3 rounded-lg border border-gray-700 outline-none">
+                        <input id="lOrder" type="number" placeholder="Order Number (1, 2, 3...)" class="w-full bg-gray-900 p-3 rounded-lg border border-gray-700 outline-none">
+                        <button onclick="addLesson()" class="w-full bg-green-600 py-3 rounded-lg font-bold hover:bg-green-500 transition">Add to Database</button>
+                    </div>
+                </section>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl overflow-hidden">
+                <h2 class="text-xl font-bold mb-4">Course Content Preview</h2>
+                <div id="previewList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                    <p class="text-gray-500 italic">Select a course to see lessons...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // const API = "http://localhost:8000";
+        const API = "https://social-carrots-write.loca.lt";
+        async function loadCourses() {
+            const res = await fetch(`${API}/api/courses`);
+            const courses = await res.json();
+            const select = document.getElementById('cSelect');
+            select.innerHTML = '<option value="">-- Select Course --</option>' + 
+                courses.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+
+        async function loadCurrentLessons() {
+            const cid = document.getElementById('cSelect').value;
+            if(!cid) return;
+            const res = await fetch(`${API}/api/lessons/${cid}`);
+            const lessons = await res.json();
+            const list = document.getElementById('previewList');
+            list.innerHTML = lessons.map(l => `
+                <div class="p-3 bg-gray-900 rounded-lg flex justify-between border border-gray-700">
+                    <span>${l.order}. ${l.title}</span>
+                    <span class="text-xs text-gray-500">ID: ${l.file_id.substring(0,8)}...</span>
+                </div>
+            `).join('') || '<p class="text-gray-500">No lessons yet.</p>';
+        }
+
+        async function addCourse() {
+            const name = document.getElementById('cName').value;
+            await fetch(`${API}/admin/add_course?name=${encodeURIComponent(name)}`, {method:'POST'});
+            alert("Course Created!");
+            loadCourses();
+        }
+
+        async function addLesson() {
+            const cid = document.getElementById('cSelect').value;
+            const title = document.getElementById('lTitle').value;
+            const fid = document.getElementById('lFile').value;
+            const order = document.getElementById('lOrder').value;
+
+            if(!cid || !title || !fid) return alert("Fill all fields");
+
+            await fetch(`${API}/admin/add_lesson?course_id=${cid}&title=${encodeURIComponent(title)}&file_id=${fid}&order=${order}`, {method:'POST'});
+            alert("Lesson Added!");
+            loadCurrentLessons();
+            document.getElementById('lTitle').value = "";
+            document.getElementById('lFile').value = "";
+        }
+
+        loadCourses();
+    </script>
+</body>
+</html>
