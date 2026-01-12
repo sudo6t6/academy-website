@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -113,6 +113,84 @@
             } else {
                 alert("Payment failed. Please try again.");
             }
+        }
+
+        loadCourses();
+    </script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Academy Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white min-h-screen">
+    <nav class="p-6 border-b border-slate-800 bg-slate-900/50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">PRO Academy</h1>
+            <button onclick="logout()" class="text-sm text-slate-400 hover:text-white">Logout</button>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-8">
+        <h2 class="text-3xl font-bold mb-8">Your Courses</h2>
+        <div id="courseContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="animate-pulse bg-slate-900 h-64 rounded-2xl border border-slate-800"></div>
+        </div>
+    </main>
+
+    <script>
+        // Update this to your active Localtunnel URL
+        const API = "https://polite-dancers-repeat.loca.lt";
+        const token = localStorage.getItem('token');
+
+        if (!token) window.location.href = "login.html";
+
+        async function loadCourses() {
+            try {
+                const res = await fetch(`${API}/api/courses`, {
+                    headers: { "Bypass-Tunnel-Reminder": "true" }
+                });
+
+                const data = await res.json();
+
+                // FIX: Ensure data is an array before mapping
+                const courses = Array.isArray(data) ? data : [];
+                const container = document.getElementById('courseContainer');
+
+                if (courses.length === 0) {
+                    container.innerHTML = `<p class="text-slate-500 col-span-full text-center">No courses available yet.</p>`;
+                    return;
+                }
+
+                container.innerHTML = courses.map(c => `
+                    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 hover:border-blue-500/50 transition-all group">
+                        <div class="h-40 bg-slate-800 rounded-xl mb-4 overflow-hidden relative">
+                            <div class="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20"></div>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-blue-400 transition-colors">${c.name}</h3>
+                        <p class="text-slate-400 text-sm mb-6 line-clamp-2">${c.description || 'Access your professional curriculum.'}</p>
+                        <a href="player.html?course=${c.id}" class="block text-center bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20">
+                            Start Learning
+                        </a>
+                    </div>
+                `).join('');
+
+            } catch (e) {
+                console.error("Load Error:", e);
+                document.getElementById('courseContainer').innerHTML = `
+                    <div class="col-span-full bg-red-900/10 border border-red-900/50 p-6 rounded-xl text-center">
+                        <p class="text-red-400">Connection to server failed.</p>
+                        <a href="${API}" target="_blank" class="text-xs underline mt-2 block">Authorize Tunnel Connection</a>
+                    </div>`;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = "login.html";
         }
 
         loadCourses();
