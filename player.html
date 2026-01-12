@@ -272,7 +272,7 @@
         fetchLessons();
     </script>
 </body>
-</html> -->
+</html> 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -285,7 +285,7 @@
         <div class="flex-1">
             <div class="bg-black rounded-2xl overflow-hidden border border-gray-800 shadow-2xl">
                 <!-- <video id="vPlayer" controls class="w-full aspect-video"></video> -->
-                <video id="vPlayer" controls crossorigin="anonymous" class="w-full aspect-video bg-black"></video>
+        <!--        <video id="vPlayer" controls crossorigin="anonymous" class="w-full aspect-video bg-black"></video>
             </div>
             <h1 id="vTitle" class="text-2xl font-bold mt-6 text-blue-400">Select a lesson...</h1>
         </div>
@@ -334,6 +334,150 @@
             player.play();
         }
 
+        fetchLessons();
+    </script>
+</body>
+</html>   --->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRO Academy - Video Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .active-lesson { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+    </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+
+    <nav class="border-b border-gray-800 bg-gray-900/50 p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-blue-400 font-bold flex items-center gap-2">
+                <span>&larr;</span> Back to Dashboard
+            </a>
+            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                PRO Academy Player
+            </h1>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 lg:p-10 flex flex-col lg:flex-row gap-8">
+        
+        <div class="flex-1">
+            <div class="bg-black rounded-2xl overflow-hidden border border-gray-800 shadow-2xl relative">
+                <video id="vPlayer" controls crossorigin="anonymous" class="w-full aspect-video">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            
+            <div class="mt-6">
+                <h2 id="vTitle" class="text-2xl font-bold text-white mb-2">Select a lesson to begin...</h2>
+                <p class="text-gray-400">Streaming high-quality curriculum from secure cloud storage.</p>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-96 bg-gray-900 rounded-2xl border border-gray-800 flex flex-col h-[600px]">
+            <div class="p-6 border-b border-gray-800">
+                <h3 class="text-xl font-bold">Course Content</h3>
+            </div>
+            
+            <div id="lList" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                <div class="animate-pulse space-y-4">
+                    <div class="h-12 bg-gray-800 rounded-xl"></div>
+                    <div class="h-12 bg-gray-800 rounded-xl"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Update this URL to your current Localtunnel URL
+        const API = "https://little-cobras-switch.loca.lt";
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('course');
+        const token = localStorage.getItem('token');
+
+        // Redirect if not logged in
+        if (!token) {
+            window.location.href = "login.html";
+        }
+
+        async function fetchLessons() {
+            try {
+                const res = await fetch(`${API}/api/lessons/${courseId}`, {
+                    headers: { "Bypass-Tunnel-Reminder": "true" }
+                });
+                const lessons = await res.json();
+                const list = document.getElementById('lList');
+                
+                if (lessons.length === 0) {
+                    list.innerHTML = `<p class="text-gray-500 text-center mt-10">No lessons found.</p>`;
+                    return;
+                }
+
+                list.innerHTML = lessons.map(l => `
+                    <button onclick="playLesson('${l.file_id}', '${l.title.replace(/'/g, "\\'")}', this)" 
+                            class="lesson-btn w-full text-left p-4 rounded-xl bg-gray-800/50 hover:bg-gray-800 border border-gray-700 transition-all group">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-blue-400 font-mono uppercase tracking-widest">Lesson ${l.order}</span>
+                            <svg class="w-4 h-4 text-gray-600 group-hover:text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
+                            </svg>
+                        </div>
+                        <span class="font-medium block mt-1 text-gray-200">${l.title}</span>
+                    </button>
+                `).join('');
+            } catch (e) {
+                console.error("Failed to load lessons:", e);
+                document.getElementById('lList').innerHTML = `<p class="text-red-400 text-sm">Error connecting to server. Check tunnel status.</p>`;
+            }
+        }
+
+        async function playLesson(fileId, title, btnElement) {
+            const player = document.getElementById('vPlayer');
+            const vTitle = document.getElementById('vTitle');
+            
+            // 1. UI Updates
+            document.querySelectorAll('.lesson-btn').forEach(b => b.classList.remove('active-lesson'));
+            if(btnElement) btnElement.classList.add('active-lesson');
+            vTitle.innerText = title;
+
+            // 2. Cleanup existing video state to prevent "Aborted" errors
+            player.pause();
+            player.removeAttribute('src');
+            player.load();
+
+            // 3. Prepare URL
+            const videoUrl = `${API}/video/${fileId}?token=${token}`;
+
+            // 4. THE LOCALTUNNEL BYPASS TRICK
+            // We make a fetch request with the bypass header. This "unlocks" 
+            // the tunnel for the current browser session.
+            try {
+                await fetch(videoUrl, {
+                    method: 'GET',
+                    headers: { "Bypass-Tunnel-Reminder": "true" }
+                });
+            } catch (err) {
+                console.log("Tunnel bypass ping sent.");
+            }
+
+            // 5. Load and Play
+            player.src = videoUrl;
+            player.play().catch(error => {
+                console.error("Playback failed:", error);
+                // Usually occurs if the user hasn't interacted with the page yet
+                alert("Click 'OK' to start video playback.");
+                player.play();
+            });
+        }
+
+        // Initialize
         fetchLessons();
     </script>
 </body>
