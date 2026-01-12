@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8"><title>Login</title>
@@ -28,6 +28,50 @@
                 window.location.href="index.html";
             } else { alert("Login Failed"); }
         };
+    </script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Login - Academy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white flex items-center justify-center min-h-screen">
+    <form onsubmit="handleLogin(event)" class="bg-slate-900 p-8 rounded-2xl border border-slate-800 w-96 shadow-xl">
+        <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+        <input id="username" type="text" placeholder="Username" class="w-full bg-slate-800 border-slate-700 p-3 rounded-lg mb-4" required>
+        <input id="password" type="password" placeholder="Password" class="w-full bg-slate-800 border-slate-700 p-3 rounded-lg mb-6" required>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold transition-all">Enter Academy</button>
+        <p class="text-center mt-4 text-sm text-slate-400">New here? <a href="register.html" class="text-blue-400 underline">Register</a></p>
+    </form>
+
+    <script>
+        const API = "https://polite-dancers-repeat.loca.lt"; // Update to your active URL
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            try {
+                const res = await fetch(`${API}/token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Bypass-Tunnel-Reminder': 'true' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('token', data.access_token);
+                    window.location.href = "index.html";
+                } else {
+                    alert("Invalid username or password");
+                }
+            } catch (err) {
+                alert("Server connection failed");
+            }
+        }
     </script>
 </body>
 </html>
