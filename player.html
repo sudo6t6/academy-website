@@ -337,7 +337,7 @@
         fetchLessons();
     </script>
 </body>
-</html>   --->
+</html>   ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -478,6 +478,76 @@
         }
 
         // Initialize
+        fetchLessons();
+    </script>
+</body>
+</html>
+--->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Academy Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-4 lg:p-10">
+    <div class="container mx-auto flex flex-col lg:flex-row gap-8">
+        <div class="flex-1">
+            <div class="bg-black rounded-xl overflow-hidden border border-gray-800 shadow-2xl">
+                <video id="vPlayer" controls crossorigin="anonymous" class="w-full aspect-video"></video>
+            </div>
+            <h1 id="vTitle" class="text-2xl font-bold mt-4 text-blue-400 italic">Select a lesson...</h1>
+        </div>
+
+        <div class="w-full lg:w-80 bg-gray-800 rounded-xl p-5 border border-gray-700">
+            <h2 class="text-xl font-bold mb-4">Course Lessons</h2>
+            <div id="lList" class="space-y-2">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // CRITICAL: Update this to your current Localtunnel URL
+        const API = "https://little-cobras-switch.loca.lt";
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('course');
+        const token = localStorage.getItem('token');
+
+        async function fetchLessons() {
+            try {
+                const res = await fetch(`${API}/api/lessons/${courseId}`, {
+                    headers: { "Bypass-Tunnel-Reminder": "true" } // Forces LT to bypass reminder
+                });
+                const lessons = await res.json();
+                const list = document.getElementById('lList');
+                
+                list.innerHTML = lessons.map(l => `
+                    <button onclick="playLesson('${l.file_id}', '${l.title}')" 
+                            class="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-blue-600 transition-all border border-gray-600">
+                        ${l.order}. ${l.title}
+                    </button>
+                `).join('');
+            } catch (e) {
+                console.error("Fetch error:", e);
+                document.getElementById('lList').innerHTML = `
+                    <div class="p-4 bg-red-900/20 border border-red-500 rounded-lg text-xs text-red-200">
+                        Connection Blocked. <br><br>
+                        <a href="${API}" target="_blank" class="underline font-bold text-white">Click here to authorize</a>, then refresh this page.
+                    </div>`;
+            }
+        }
+
+        async function playLesson(fileId, title) {
+            document.getElementById('vTitle').innerText = title;
+            const player = document.getElementById('vPlayer');
+            const videoUrl = `${API}/video/${file_id}?token=${token}`;
+
+            // Pre-fetch to wake up tunnel
+            await fetch(videoUrl, { headers: { "Bypass-Tunnel-Reminder": "true" } }).catch(() => {});
+
+            player.src = videoUrl;
+            player.play();
+        }
+
         fetchLessons();
     </script>
 </body>
