@@ -633,7 +633,7 @@
     </script>
 </body>
 </html>
----->
+----
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -718,6 +718,60 @@
         }
 
         if(token && courseId) fetchLessons();
+    </script>
+</body>
+</html>
+------>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Academy Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white min-h-screen p-6">
+    <div class="container mx-auto flex flex-col lg:flex-row gap-8">
+        <div class="flex-1">
+            <div class="bg-black rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+                <video id="vPlayer" controls crossorigin="anonymous" class="w-full aspect-video"></video>
+            </div>
+            <h1 id="vTitle" class="text-2xl font-bold mt-6 text-blue-400">Loading lesson...</h1>
+        </div>
+        <div class="w-full lg:w-80 bg-slate-900 rounded-2xl p-6 border border-slate-800">
+            <h2 class="text-xl font-bold mb-4">Lessons</h2>
+            <div id="lList" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <script>
+        const API = "https://polite-dancers-repeat.loca.lt"; // UPDATE THIS
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('course');
+        const token = localStorage.getItem('token');
+
+        async function fetchLessons() {
+            try {
+                const res = await fetch(`${API}/api/lessons/${courseId}`, {
+                    headers: { "Bypass-Tunnel-Reminder": "true" }
+                });
+                const data = await res.json();
+                const list = document.getElementById('lList');
+                list.innerHTML = data.map(l => `
+                    <button onclick="playVideo('${l.file_id}', '${l.title}')" class="w-full text-left p-3 rounded bg-slate-800 hover:bg-blue-600 border border-slate-700 transition-all">
+                        ${l.title}
+                    </button>
+                `).join('');
+                if(data.length > 0) playVideo(data[0].file_id, data[0].title);
+            } catch (e) { console.error(e); }
+        }
+
+        function playVideo(fileId, title) {
+            document.getElementById('vTitle').innerText = title;
+            const player = document.getElementById('vPlayer');
+            player.src = `${API}/video/${fileId}?token=${token}`;
+            player.play();
+        }
+
+        if(courseId) fetchLessons();
     </script>
 </body>
 </html>
