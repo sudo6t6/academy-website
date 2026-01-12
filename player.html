@@ -482,7 +482,7 @@
     </script>
 </body>
 </html>
---->
+---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -549,6 +549,87 @@
         }
 
         fetchLessons();
+    </script>
+</body>
+</html>
+---->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Academy Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-4 lg:p-10">
+    <div class="container mx-auto flex flex-col lg:flex-row gap-8">
+        <div class="flex-1">
+            <div class="bg-black rounded-xl overflow-hidden border border-gray-800 shadow-2xl">
+                <video id="vPlayer" controls crossorigin="anonymous" class="w-full aspect-video"></video>
+            </div>
+            <h1 id="vTitle" class="text-2xl font-bold mt-4 text-blue-400">Select a lesson...</h1>
+        </div>
+
+        <div class="w-full lg:w-80 bg-gray-800 rounded-xl p-5 border border-gray-700">
+            <h2 class="text-xl font-bold mb-4">Course Lessons</h2>
+            <div id="lList" class="space-y-2">
+                <p class="text-gray-500 italic">Loading content...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update this to your active Localtunnel URL
+        const API = "https://little-cobras-switch.loca.lt";
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('course');
+        const token = localStorage.getItem('token');
+
+        async function fetchLessons() {
+            try {
+                const res = await fetch(`${API}/api/lessons/${courseId}`, {
+                    headers: { "Bypass-Tunnel-Reminder": "true" }
+                });
+                
+                if (!res.ok) throw new Error("Tunnel error");
+                
+                const lessons = await res.json();
+                const list = document.getElementById('lList');
+                
+                list.innerHTML = lessons.map(l => `
+                    <button onclick="playLesson('${l.file_id}', '${l.title.replace(/'/g, "\\'")}')" 
+                            class="w-full text-left p-3 rounded-lg bg-gray-700 hover:bg-blue-600 transition-all border border-gray-600">
+                        Lesson ${l.order}: ${l.title}
+                    </button>
+                `).join('');
+            } catch (e) {
+                console.error("Fetch error:", e);
+                document.getElementById('lList').innerHTML = `
+                    <div class="p-4 bg-red-900/20 border border-red-500 rounded-lg text-xs text-red-200">
+                        <p class="font-bold mb-2">Backend Connection Error</p>
+                        <p class="mb-3">The secure tunnel is blocking the request.</p>
+                        <a href="${API}" target="_blank" class="block text-center bg-red-500 text-white p-2 rounded">
+                            Click to Authorize Tunnel
+                        </a>
+                        <p class="mt-2 opacity-70">After clicking, come back and refresh this page.</p>
+                    </div>`;
+            }
+        }
+
+        async function playLesson(fileId, title) {
+            document.getElementById('vTitle').innerText = title;
+            const player = document.getElementById('vPlayer');
+            
+            // Fixed the variable name typo here
+            const videoUrl = `${API}/video/${fileId}?token=${token}`;
+
+            // Background fetch to ensure tunnel is awake for this specific media request
+            fetch(videoUrl, { headers: { "Bypass-Tunnel-Reminder": "true" } }).catch(() => {});
+
+            player.src = videoUrl;
+            player.play().catch(e => console.log("Auto-play blocked, user must click play."));
+        }
+
+        if(courseId) fetchLessons();
     </script>
 </body>
 </html>
