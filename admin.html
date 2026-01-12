@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8"><title>Academy Admin Panel</title>
@@ -82,6 +82,79 @@
             loadCurrentLessons();
             document.getElementById('lTitle').value = "";
             document.getElementById('lFile').value = "";
+        }
+
+        loadCourses();
+    </script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Academy Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white p-10">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-10">Admin Dashboard</h1>
+
+        <div class="bg-slate-900 p-6 rounded-xl border border-slate-800 mb-10">
+            <h2 class="text-xl font-bold mb-4 text-blue-400">Add New Course</h2>
+            <div class="flex gap-4">
+                <input id="cName" type="text" placeholder="Course Name" class="bg-slate-800 border-slate-700 p-2 rounded flex-1">
+                <button onclick="addCourse()" class="bg-blue-600 px-6 py-2 rounded font-bold">Create</button>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 p-6 rounded-xl border border-slate-800">
+            <h2 class="text-xl font-bold mb-4 text-green-400">Add Lesson to Course</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <select id="courseSelect" class="bg-slate-800 p-2 rounded"></select>
+                <input id="lOrder" type="number" placeholder="Order (e.g. 1)" class="bg-slate-800 p-2 rounded">
+                <input id="lTitle" type="text" placeholder="Lesson Title" class="bg-slate-800 p-2 rounded">
+                <input id="lFile" type="text" placeholder="Telegram File ID" class="bg-slate-800 p-2 rounded">
+            </div>
+            <button onclick="addLesson()" class="w-full mt-4 bg-green-600 py-2 rounded font-bold">Add Lesson</button>
+        </div>
+    </div>
+
+    <script>
+        const API = "https://polite-dancers-repeat.loca.lt";
+
+        async function loadCourses() {
+            try {
+                const res = await fetch(`${API}/api/courses`, {
+                    headers: { "Bypass-Tunnel-Reminder": "true" }
+                });
+                const data = await res.json();
+                const courses = Array.isArray(data) ? data : [];
+                
+                const select = document.getElementById('courseSelect');
+                select.innerHTML = courses.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            } catch (e) { console.error("Load failed", e); }
+        }
+
+        async function addCourse() {
+            const name = document.getElementById('cName').value;
+            await fetch(`${API}/admin/add_course?name=${encodeURIComponent(name)}`, { 
+                method: 'POST',
+                headers: { "Bypass-Tunnel-Reminder": "true" }
+            });
+            alert("Course Added!");
+            loadCourses();
+        }
+
+        async function addLesson() {
+            const cid = document.getElementById('courseSelect').value;
+            const title = document.getElementById('lTitle').value;
+            const fid = document.getElementById('lFile').value;
+            const order = document.getElementById('lOrder').value;
+
+            await fetch(`${API}/admin/add_lesson?course_id=${cid}&title=${encodeURIComponent(title)}&file_id=${fid}&order=${order}`, { 
+                method: 'POST',
+                headers: { "Bypass-Tunnel-Reminder": "true" }
+            });
+            alert("Lesson Added!");
         }
 
         loadCourses();
