@@ -118,7 +118,7 @@
         loadCourses();
     </script>
 </body>
-</html> -->
+</html> --
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -194,6 +194,34 @@
         }
 
         loadCourses();
+    </script>
+</body>
+</html>
+---->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Academy Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-white p-10">
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold mb-10">My Courses</h1>
+        <div id="courseContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+    </div>
+    <script>
+        const API = "https://three-emus-fix.loca.lt/"; // UPDATE THIS
+        async function load() {
+            const res = await fetch(`${API}/api/courses`, { headers: { "Bypass-Tunnel-Reminder": "true" } });
+            const data = await res.json();
+            document.getElementById('courseContainer').innerHTML = data.map(c => `
+                <div class="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                    <h3 class="text-xl font-bold mb-4">${c.name}</h3>
+                    <a href="player.html?course=${c.id}" class="block text-center bg-blue-600 py-2 rounded font-bold hover:bg-blue-500">View Course</a>
+                </div>
+            `).join('');
+        }
+        load();
     </script>
 </body>
 </html>
